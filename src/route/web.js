@@ -31,11 +31,25 @@ const imageFilter = function (req, file, cb) {
 
 let upload = multer({ storage: storage, fileFilter: imageFilter });
 
+let uploadMultiple = multer({ storage: storage, fileFilter: imageFilter }).array('files', 3);
 
 const initWebRoute = (app) => {
     router.get('/', homeController.getHomepage);
     router.get('/upload-file', homeController.getUploadFilePage);
     router.post('/upload-file', upload.single('file'), homeController.handleUploadFile);
+
+    router.post('/upload-multi-file', (req, res, next) => {
+        uploadMultiple(req, res, (err) => {
+            if (err instanceof multer.MulterError && err.code === "LIMIT_UNEXPECTED_FILE") {
+                res.send('LIMIT_UNEXPECTED_FILE')
+            } else if (err) {
+                res.send(err)
+            } else {
+                next();
+            }
+        })
+    }, homeController.uploadMultipleFile);
+
     router.post('/create-new-user', homeController.createNewUser);
     router.post('/delete-user', homeController.deleteUser);
     router.get('/edit-user/:id', homeController.getEditPage);
